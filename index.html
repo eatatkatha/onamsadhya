@@ -346,7 +346,15 @@
     transition: transform .2s ease;
   }
   .modal-confirm-btn:hover{ transform:translateY(-2px); }
+  .modal-confirm-btn:disabled{
+    opacity:0.4; cursor:not-allowed; transform:none; background:var(--green-soft);
+  }
+  .modal-confirm-btn:disabled:hover{ transform:none; }
   .modal-confirm-sub{ font-size:0.76rem; color:var(--green-soft); }
+  .modal-screenshot-note{
+    font-size:0.78rem; color:var(--green-deep); font-weight:500; margin-top:10px;
+    padding-top:10px; border-top:1px dashed var(--line);
+  }
   .confirm-note{ font-size:0.78rem; color:var(--green-soft); margin-bottom:18px; }
 
   .confirm-screen{ display:none; }
@@ -517,8 +525,9 @@
       <button class="upi-app-btn" id="upiAppBtn" style="display:none;">Open in UPI app →</button>
       <p class="modal-hint" id="modalHint">Open Google Pay, PhonePe, Paytm or any UPI app and scan this code to complete your booking.</p>
       <div class="modal-detail" id="modalDetail">2 people · 11:30 AM – 12:00 PM</div>
-      <button class="modal-confirm-btn" id="confirmPaidBtn">I've completed the payment</button>
-      <div class="modal-confirm-sub">Tap this only after the payment shows successful in your UPI app.</div>
+      <button class="modal-confirm-btn" id="confirmPaidBtn" disabled>I've completed the payment</button>
+      <div class="modal-confirm-sub" id="confirmSubHint">Scan the code or tap "Open in UPI app" first to enable this.</div>
+      <div class="modal-screenshot-note">📩 Send your payment screenshot to <a href="tel:+919061091429" style="color:var(--green-deep); text-decoration:underline;">9061091429</a> so we can confirm your slot faster.</div>
     </div>
 
     <div class="confirm-screen" id="confirmScreen">
@@ -626,13 +635,28 @@
     payScreen.style.display = 'block';
     confirmScreen.classList.remove('show');
     modalOverlay.classList.add('open');
+
+    // Reset confirm button each time a fresh QR/payment is shown
+    confirmPaidBtn.disabled = true;
+    document.getElementById('confirmSubHint').textContent = 'Scan the code or tap "Open in UPI app" first to enable this.';
   });
 
+  function unlockConfirmButton(){
+    confirmPaidBtn.disabled = false;
+    document.getElementById('confirmSubHint').textContent = 'Tap this only after the payment shows successful in your UPI app.';
+  }
+
   modalQr.addEventListener('click', ()=>{
-    if(currentUpiUri){ window.location.href = currentUpiUri; }
+    if(currentUpiUri){
+      unlockConfirmButton();
+      window.location.href = currentUpiUri;
+    }
   });
   document.getElementById('upiAppBtn').addEventListener('click', ()=>{
-    if(currentUpiUri){ window.location.href = currentUpiUri; }
+    if(currentUpiUri){
+      unlockConfirmButton();
+      window.location.href = currentUpiUri;
+    }
   });
 
   confirmPaidBtn.addEventListener('click', ()=>{
