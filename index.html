@@ -7,6 +7,34 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCViQe4awZe0FR8dAV1qvGMNNJcGDO4Y0c",
+    authDomain: "katha-onam.firebaseapp.com",
+    projectId: "katha-onam",
+    storageBucket: "katha-onam.firebasestorage.app",
+    messagingSenderId: "748131392844",
+    appId: "1:748131392844:web:37a240150bdb8a76ec03e9",
+    measurementId: "G-88FR3D4GMG"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.__kathaSaveBooking = async function(booking) {
+    try {
+      await addDoc(collection(db, "bookings"), {
+        ...booking,
+        timestamp: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Booking save failed:", err);
+    }
+  };
+</script>
 <style>
   :root{
     --cream:#FAF3E5;
@@ -461,11 +489,11 @@
         </div>
 
         <span class="field-label">Full name</span>
-        <input class="inp" type="text" placeholder="Your name">
+        <input class="inp" id="guestName" type="text" placeholder="Your name">
         <span class="field-label">Phone</span>
-        <input class="inp" type="tel" placeholder="10-digit mobile number">
+        <input class="inp" id="guestPhone" type="tel" placeholder="10-digit mobile number">
         <span class="field-label">Email address</span>
-        <input class="inp" type="email" placeholder="you@example.com">
+        <input class="inp" id="guestEmail" type="email" placeholder="you@example.com">
 
         <div class="total-row">
           <span class="lbl">Total</span>
@@ -608,6 +636,20 @@
   });
 
   confirmPaidBtn.addEventListener('click', ()=>{
+    const name = document.getElementById('guestName').value || 'Guest';
+    const phone = document.getElementById('guestPhone').value || '';
+    const email = document.getElementById('guestEmail').value || '';
+    if (window.__kathaSaveBooking) {
+      window.__kathaSaveBooking({
+        name: name,
+        phone: phone,
+        email: email,
+        guests: qty,
+        slot: activeSlot,
+        amount: currentTotal,
+        status: 'pending'
+      });
+    }
     payScreen.style.display = 'none';
     confirmScreen.classList.add('show');
   });
