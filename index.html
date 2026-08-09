@@ -303,6 +303,13 @@
     border:1px solid var(--line); display:flex; align-items:center; justify-content:center; padding:16px;
   }
   .modal-hint{ font-size:0.85rem; color:var(--green-soft); line-height:1.55; margin-bottom:14px; }
+  .upi-app-btn{
+    width:100%; background:var(--gold); color:var(--green-deep); font-weight:600;
+    padding:14px; border-radius:14px; border:none; font-size:0.92rem; cursor:pointer;
+    font-family:'Jost',sans-serif; margin-bottom:16px;
+    transition: transform .2s ease;
+  }
+  .upi-app-btn:hover{ transform:translateY(-2px); }
   .modal-detail{ font-size:0.8rem; color:var(--gold); font-weight:500; margin-bottom:26px; }
   .modal-confirm-btn{
     width:100%; background:var(--green-deep); color:var(--cream); font-weight:600;
@@ -312,6 +319,7 @@
   }
   .modal-confirm-btn:hover{ transform:translateY(-2px); }
   .modal-confirm-sub{ font-size:0.76rem; color:var(--green-soft); }
+  .confirm-note{ font-size:0.78rem; color:var(--green-soft); margin-bottom:18px; }
 
   .confirm-screen{ display:none; }
   .confirm-screen.show{ display:block; }
@@ -319,8 +327,11 @@
     width:70px; height:70px; border-radius:50%; background:var(--green-deep); color:var(--cream);
     display:flex; align-items:center; justify-content:center; margin:0 auto 22px; font-size:2rem;
   }
-  .confirm-screen h3{ font-family:'Fraunces',serif; font-size:1.4rem; color:var(--green-deep); margin-bottom:12px; }
-  .confirm-screen p{ font-size:0.9rem; color:var(--green-soft); line-height:1.6; margin-bottom:20px; }
+  .confirm-screen h3{ font-family:'Fraunces',serif; font-size:1.5rem; color:var(--green-deep); margin-bottom:16px; }
+  .confirm-message{
+    font-family:'Fraunces',serif; font-style:italic; font-size:1.05rem; color:var(--green-deep);
+    line-height:1.65; margin-bottom:24px; padding:0 6px;
+  }
   .confirm-screen .ref{
     background:var(--cream-2); border:1px dashed var(--line); border-radius:12px; padding:14px 18px;
     font-size:0.85rem; color:var(--green-deep); margin-bottom:22px;
@@ -474,8 +485,9 @@
     <div class="pay-screen" id="payScreen">
       <div class="modal-tag">Scan to pay</div>
       <h3 id="modalTitle">₹580 · Katha Bakes and Restaurant</h3>
-      <div class="modal-qr" id="modalQr"></div>
-      <p class="modal-hint">Open Google Pay, PhonePe, Paytm or any UPI app and scan this code to complete your booking.</p>
+      <div class="modal-qr" id="modalQr" style="cursor:pointer;"></div>
+      <button class="upi-app-btn" id="upiAppBtn" style="display:none;">Open in UPI app →</button>
+      <p class="modal-hint" id="modalHint">Open Google Pay, PhonePe, Paytm or any UPI app and scan this code to complete your booking.</p>
       <div class="modal-detail" id="modalDetail">2 people · 11:30 AM – 12:00 PM</div>
       <button class="modal-confirm-btn" id="confirmPaidBtn">I've completed the payment</button>
       <div class="modal-confirm-sub">Tap this only after the payment shows successful in your UPI app.</div>
@@ -483,9 +495,10 @@
 
     <div class="confirm-screen" id="confirmScreen">
       <div class="confirm-tick">✓</div>
-      <h3>Booking noted!</h3>
-      <p>Thanks for pre-booking your Onam Sadhya with Katha. Please keep your UPI payment screenshot handy — we'll confirm your slot on WhatsApp/call shortly.</p>
+      <h3>Booking confirmed!</h3>
+      <p class="confirm-message">Thank you for becoming part of our story — may every visit leave you with another memory. Because here, every dish has a story.</p>
       <div class="ref" id="confirmRef">Ref: 2 people · 11:30 AM – 12:00 PM · ₹580</div>
+      <p class="confirm-note">Please save your UPI payment screenshot — we'll verify and confirm your slot shortly.</p>
       <button class="confirm-close-btn" id="confirmCloseBtn">Done</button>
     </div>
 
@@ -532,6 +545,7 @@
   const confirmCloseBtn = document.getElementById('confirmCloseBtn');
   const confirmRef = document.getElementById('confirmRef');
   let currentTotal = qty * PRICE;
+  let currentUpiUri = '';
 
   function render(){
     qtyVal.textContent = qty + (qty === 1 ? ' person' : ' people');
@@ -557,6 +571,7 @@
 
   payBtn.addEventListener('click', ()=>{
     const upiUri = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${currentTotal}&cu=INR&tn=${encodeURIComponent('Onam Sadhya x' + qty)}`;
+    currentUpiUri = upiUri;
     modalQr.innerHTML = '';
     new QRCode(modalQr, {
       text: upiUri,
@@ -569,9 +584,27 @@
     modalTitle.textContent = '₹' + currentTotal.toLocaleString('en-IN') + ' · ' + PAYEE_NAME;
     modalDetail.textContent = detailStr;
     confirmRef.textContent = 'Ref: ' + detailStr + ' · ₹' + currentTotal.toLocaleString('en-IN');
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const upiBtn = document.getElementById('upiAppBtn');
+    if(isMobile){
+      upiBtn.style.display = 'block';
+      document.getElementById('modalHint').textContent = 'Or scan the code above with any UPI app.';
+    } else {
+      upiBtn.style.display = 'none';
+      document.getElementById('modalHint').textContent = 'Open Google Pay, PhonePe, Paytm or any UPI app on your phone and scan this code to pay.';
+    }
+
     payScreen.style.display = 'block';
     confirmScreen.classList.remove('show');
     modalOverlay.classList.add('open');
+  });
+
+  modalQr.addEventListener('click', ()=>{
+    if(currentUpiUri){ window.location.href = currentUpiUri; }
+  });
+  document.getElementById('upiAppBtn').addEventListener('click', ()=>{
+    if(currentUpiUri){ window.location.href = currentUpiUri; }
   });
 
   confirmPaidBtn.addEventListener('click', ()=>{
